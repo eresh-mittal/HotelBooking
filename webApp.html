@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hotel Booking System</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.21.2/babel.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f7fa;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .controls {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s, transform 0.1s;
+    }
+    .button:active {
+      transform: scale(0.98);
+    }
+    .primary {
+      background-color: #4a6ee0;
+      color: white;
+    }
+    .primary:hover {
+      background-color: #3c5dc4;
+    }
+    .secondary {
+      background-color: #e5e9f0;
+      color: #2e3440;
+    }
+    .secondary:hover {
+      background-color: #d8dee9;
+    }
+    .danger {
+      background-color: #ec5564;
+      color: white;
+    }
+    .danger:hover {
+      background-color: #df4454;
+    }
+    .success {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .success:hover {
+      background-color: #45a049;
+    }
+    .warning {
+      background-color: #ffb74d;
+      color: white;
+    }
+    .warning:hover {
+      background-color: #ffa726;
+    }
+    label {
+      font-weight: 600;
+      margin-right: 8px;
+    }
+    input {
+      padding: 8px 12px;
+      border: 1px solid #dfe4ea;
+      border-radius: 4px;
+      width: 80px;
+    }
+    .hotel {
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 10px;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .floor {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .floor-number {
+      width: 30px;
+      text-align: right;
+      font-weight: 600;
+      color: #4a4a4a;
+    }
+    .stair-lift {
+      background-color: #e5e9f0;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .rooms {
+      display: flex;
+      gap: 10px;
+    }
+    .room {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      user-select: none;
+      transition: all 0.2s;
+    }
+    .available {
+      background-color: #a3be8c;
+      color: white;
+    }
+    .booked {
+      background-color: #bf616a;
+      color: white;
+    }
+    .selected {
+      background-color: #5e81ac;
+      color: white;
+      transform: scale(1.05);
+      box-shadow: 0 2px 8px rgba(94, 129, 172, 0.5);
+    }
+    .info-panel {
+      margin: 20px 0;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-right: 5px;
+    }
+    .status {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .error {
+      background-color: #ffebee;
+      color: #b71c1c;
+    }
+    .success-status {
+      background-color: #e8f5e9;
+      color: #1b5e20;
+    }
+    .api-settings {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #f5f5f5;
+      border-radius: 8px;
+    }
+    .api-settings input {
+      width: 100%;
+      max-width: 300px;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // Hotel configuration
+    const FLOORS = 10;
+    const ROOMS_PER_FLOOR = [10, 10, 10, 10, 10, 10, 10, 10, 10, 7];
+
+    const HotelBookingApp = () => {
+      const [apiUrl, setApiUrl] = useState('http://localhost:8000');
+      const [availableRooms, setAvailableRooms] = useState({});
+      const [selectedRooms, setSelectedRooms] = useState([]);
+      const [numRoomsToBook, setNumRoomsToBook] = useState(1);
+      const [statusMessage, setStatusMessage] = useState(null);
+      const [lastBooking, setLastBooking] = useState(null);
+      const [loading, setLoading] = useState(false);
+
+      // Initialize - fetch data from API
+      useEffect(() => {
+        fetchRooms();
+      }, []);
+
+      // Helper to get room number
+      const getRoomNumber = (floor, room) => {
+        return floor * 100 + room;
+      };
+
+      // Fetch rooms data from API
+      const fetchRooms = async () => {
+        try {
+          setLoading(true);
+          const response = await fetch(`${apiUrl}/rooms`);
+          const data = await response.json();
+          setAvailableRooms(data.available);
+          setLoading(false);
+        } catch (error) {
+          console.error('Error fetching rooms:', error);
+          setStatusMessage({ 
+            type: 'error', 
+            message: `Error connecting to API at ${apiUrl}. Please check if server is running.` 
+          });
+          setLoading(false);
+        }
+      };
+
+      // Reset hotel via API
+      const resetHotel = async () => {
+        try {
+          setLoading(true);
+          const response = await fetch(`${apiUrl}/reset`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          const data = await response.json();
+          
+          if (data.success) {
+            setStatusMessage({ type: 'success', message: data.message });
+            fetchRooms();
+            setSelectedRooms([]);
+            setLastBooking(null);
+          } else {
+            setStatusMessage({ type: 'error', message: 'Failed to reset hotel.' });
+          }
+          setLoading(false);
+        } catch (error) {
+          console.error('Error resetting hotel:', error);
+          setStatusMessage({ type: 'error', message: 'Error communicating with server.' });
+          setLoading(false);
+        }
+      };
+
+      // Generate random occupancy via API
+      const generateRandomOccupancy = async () => {
+        try {
+          setLoading(true);
+          const response = await fetch(`${apiUrl}/random`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          const data = await response.json();
+          
+          if (data.success) {
+            setStatusMessage({ type: 'success', message: data.message });
+            fetchRooms();
+            setSelectedRooms([]);
+            setLastBooking(null);
+          } else {
+            setStatusMessage({ type: 'error', message: 'Failed to generate random occupancy.' });
+          }
+          setLoading(false);
+        } catch (error) {
+          console.error('Error generating random occupancy:', error);
+          setStatusMessage({ type: 'error', message: 'Error communicating with server.' });
+          setLoading(false);
+        }
+      };
+
+      // Book rooms via API
+      const bookRooms = async () => {
+        try {
+          if (numRoomsToBook <= 0 || numRoomsToBook > 5) {
+            setStatusMessage({ 
+              type: 'error', 
+              message: 'Please enter a valid number of rooms (1-5).' 
+            });
+            return;
+          }
+          
+          setLoading(true);
+          const response = await fetch(`${apiUrl}/book`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ num_rooms: numRoomsToBook })
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            setStatusMessage({ type: 'error', message: errorData.detail });
+            setLoading(false);
+            return;
+          }
+          
+          const data = await response.json();
+          
+          setLastBooking({
+            rooms: data.booked_rooms,
+            travelTime: data.travel_time,
+            type: data.booking_type
+          });
+          
+          setStatusMessage({ 
+            type: 'success', 
+            message: `Successfully booked ${data.booked_rooms.length} rooms with total travel time of ${data.travel_time} minutes.` 
+          });
+          
+          fetchRooms();
+          setSelectedRooms([]);
+          setLoading(false);
+        } catch (error) {
+          console.error('Error booking rooms:', error);
+          setStatusMessage({ type: 'error', message: 'Error communicating with server.' });
+          setLoading(false);
+        }
+      };
+
+      // Handle room click - select/deselect
+      const handleRoomClick = (roomNumber) => {
+        if (!availableRooms[roomNumber]) {
+          return; // Can't select booked rooms
+        }
+        
+        if (selectedRooms.includes(roomNumber)) {
+          setSelectedRooms(selectedRooms.filter(room => room !== roomNumber));
+        } else {
+          if (selectedRooms.length < 5) {
+            setSelectedRooms([...selectedRooms, roomNumber]);
+          } else {
+            setStatusMessage({ type: 'error', message: 'Maximum 5 rooms can be selected.' });
+          }
+        }
+      };
+
+      // Book selected rooms via API
+      const bookSelectedRooms = async () => {
+        try {
+          if (selectedRooms.length === 0) {
+            setStatusMessage({ type: 'error', message: 'Please select at least one room.' });
+            return;
+          }
+          
+          setLoading(true);
+          const response = await fetch(`${apiUrl}/book-selected`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ rooms: selectedRooms })
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            setStatusMessage({ type: 'error', message: errorData.detail });
+            setLoading(false);
+            return;
+          }
+          
+          const data = await response.json();
+          
+          setLastBooking({
+            rooms: data.booked_rooms,
+            travelTime: data.travel_time,
+            type: data.booking_type
+          });
+          
+          setStatusMessage({ 
+            type: 'success', 
+            message: `Successfully booked ${data.booked_rooms.length} rooms.` 
+          });
+          
+          fetchRooms();
+          setSelectedRooms([]);
+          setLoading(false);
+        } catch (error) {
+          console.error('Error booking selected rooms:', error);
+          setStatusMessage({ type: 'error', message: 'Error communicating with server.' });
+          setLoading(false);
+        }
+      };
+
+      // Cancel last booking via API
+      const cancelLastBooking = async () => {
+        try {
+          if (!lastBooking) {
+            setStatusMessage({ type: 'error', message: 'No booking to cancel.' });
+            return;
+          }
+          
+          setLoading(true);
+          const response = await fetch(`${apiUrl}/cancel`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ rooms: lastBooking.rooms })
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            setStatusMessage({ type: 'error', message: errorData.detail });
+            setLoading(false);
+            return;
+          }
+          
+          const data = await response.json();
+          
+          setStatusMessage({ type: 'success', message: data.message });
+          fetchRooms();
+          setLastBooking(null);
+          setLoading(false);
+        } catch (error) {
+          console.error('Error canceling booking:', error);
+          setStatusMessage({ type: 'error', message: 'Error communicating with server.' });
+          setLoading(false);
+        }
+      };
+
+      return (
+        <div className="container">
+          <div className="header">
+            <h1>Hotel Booking System</h1>
+            <p>10-floor hotel with 97 rooms (10 rooms on floors 1-9, 7 rooms on floor 10)</p>
+          </div>
+          
+          <div className="controls">
+            <div>
+              <label htmlFor="numRooms">Number of Rooms:</label>
+              <input 
+                id="numRooms"
+                type="number" 
+                min="1" 
+                max="5" 
+                value={numRoomsToBook}
+                onChange={(e) => setNumRoomsToBook(parseInt(e.target.value) || 0)}
+              />
+            </div>
+            
+            <button 
+              className="button primary" 
+              onClick={bookRooms}
+              disabled={loading}
+            >
+              {loading ? 'Loading...' : 'Auto Book'}
+            </button>
+            
+            <button 
+              className="button success" 
+              onClick={bookSelectedRooms} 
+              disabled={selectedRooms.length === 0 || loading}
+            >
+              Book Selected ({selectedRooms.length})
+            </button>
+            
+            <button 
+              className="button warning" 
+              onClick={generateRandomOccupancy}
+              disabled={loading}
+            >
+              Random Occupancy
+            </button>
+            
+            <button 
+              className="button danger" 
+              onClick={resetHotel}
+              disabled={loading}
+            >
+              Reset Hotel
+            </button>
+            
+            {lastBooking && (
+              <button 
+                className="button secondary" 
+                onClick={cancelLastBooking}
+                disabled={loading}
+              >
+                Cancel Last Booking
+              </button>
+            )}
+          </div>
+          
+          {statusMessage && (
+            <div className={`status ${statusMessage.type === 'error' ? 'error' : 'success-status'}`}>
+              {statusMessage.message}
+            </div>
+          )}
+          
+          {lastBooking && (
+            <div className="info-panel">
+              <h3>Last Booking Details</h3>
+              <p>
+                <strong>Rooms:</strong> {lastBooking.rooms.join(', ')}
+              </p>
+              <p>
+                <strong>Booking Type:</strong> 
+                <span className={`badge ${lastBooking.type === 'single-floor' ? 'success' : 'warning'}`}>
+                  {lastBooking.type === 'single-floor' ? 'Single Floor' : 'Multi-Floor'}
+                </span>
+              </p>
+              <p>
+                <strong>Total Travel Time:</strong> {lastBooking.travelTime} minutes
+              </p>
+            </div>
+          )}
+          
+          <div className="hotel">
+            {Array.from({ length: FLOORS }, (_, i) => FLOORS - i).map(floor => (
+              <div className="floor" key={floor}>
+                <div className="floor-number">F{floor}</div>
+                <div className="stair-lift">🚶‍♂️🛗</div>
+                <div className="rooms">
+                  {Array.from({ length: ROOMS_PER_FLOOR[floor - 1] }, (_, i) => i + 1).map(room => {
+                    const roomNumber = getRoomNumber(floor, room);
+                    const isAvailable = availableRooms[roomNumber];
+                    const isSelected = selectedRooms.includes(roomNumber);
+                    
+                    return (
+                      <div
+                        key={roomNumber}
+                        className={`room ${isAvailable ? (isSelected ? 'selected' : 'available') : 'booked'}`}
+                        onClick={() => handleRoomClick(roomNumber)}
+                      >
+                        {roomNumber}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.render(<HotelBookingApp />, document.getElementById('root'));
+  </script>
+</body>
+</html>
