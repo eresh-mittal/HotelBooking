@@ -1,2 +1,2 @@
-# HotelBooking\
+# HotelBooking
 switch to ```dev``` branch.
